@@ -10,14 +10,14 @@ categories = ["os"]
 repository = "https://github.com/marcfir/rt_tunex"
 
 [dependencies]
-bitflags = "2.11"
+bitflags = "2.13"
 
 
 [target.'cfg(target_family = "unix")'.dependencies]
 libc = { version = "0.2" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-mach2 = { version = "0.6" }
+mach2 = { version = "0.7" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 syscalls = { version = "=0.8.1", features = [
@@ -40,4 +40,4 @@ windows = { version = "0.62", features = [
 
 [dev-dependencies]
 nix = { version = "0.31", features = ["process", "sched", "mman"] }
-serde_repr = ">=0.1.5"                                              # Unused but forced for -Z minimal-versions
+serde_repr = ">=0.1.21"                                             # Unused but forced for -Z minimal-versions
