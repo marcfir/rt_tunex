@@ -1,6 +1,6 @@
 use crate::{
     clock::{ClockId, TimeSpec},
-    linux::error::ret_to_result,
+    unix::error::ret_to_result,
 };
 
 pub fn get_time(clockid: ClockId) -> Result<TimeSpec, std::io::Error> {

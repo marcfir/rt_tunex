@@ -70,7 +70,7 @@ bitflags! {
 pub unsafe fn mlock(addr: *const c_void, len: usize) -> Result<(), std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::mman::mlock(addr, len)
+        crate::unix::mman::mlock(addr, len)
     }
     #[cfg(target_os = "windows")]
     {
@@ -94,7 +94,7 @@ pub unsafe fn mlock2(
 ) -> Result<(), std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::mman::mlock2(addr, len, flags)
+        crate::unix::mman::mlock2(addr, len, flags)
     }
     #[cfg(target_os = "windows")]
     {
@@ -113,7 +113,7 @@ pub unsafe fn mlock2(
 pub unsafe fn munlock(addr: *const c_void, len: usize) -> Result<(), std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::mman::munlock(addr, len)
+        crate::unix::mman::munlock(addr, len)
     }
     #[cfg(target_os = "windows")]
     {
@@ -137,7 +137,7 @@ pub unsafe fn munlock(addr: *const c_void, len: usize) -> Result<(), std::io::Er
 pub fn mlockall(flags: MmanFlags) -> Result<(), std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::mman::mlockall(flags)
+        crate::unix::mman::mlockall(flags)
     }
     #[cfg(target_os = "windows")]
     {
@@ -154,7 +154,7 @@ pub fn mlockall(flags: MmanFlags) -> Result<(), std::io::Error> {
 pub fn munlockall() -> Result<(), std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::mman::munlockall()
+        crate::unix::mman::munlockall()
     }
     #[cfg(target_os = "windows")]
     {
@@ -168,15 +168,18 @@ mod test {
     use std::alloc::Layout;
 
     use super::*;
+    #[cfg(not(target_os = "macos"))]
     #[test]
     fn test_mlockall() {
+        mlockall(MmanFlags::empty()).unwrap();
         mlockall(MmanFlags::MCL_FUTURE).unwrap();
     }
 
+    #[cfg(target_os = "macos")]
     #[test]
-    fn test_mlockall_empty() {
-        // mlockall requires at least one of MCL_CURRENT/MCL_FUTURE; empty flags is invalid (EINVAL).
+    fn test_mlockall_mac() {
         assert!(mlockall(MmanFlags::empty()).is_err());
+        assert!(mlockall(MmanFlags::MCL_FUTURE).is_err());
     }
 
     #[test]

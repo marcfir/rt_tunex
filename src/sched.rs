@@ -6,7 +6,7 @@ use std::fmt::Debug;
 pub fn get_attr(pid: Pid) -> Result<Attributes, std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::sched::get_attr(pid)
+        crate::unix::sched::get_attr(pid)
     }
     #[cfg(target_os = "windows")]
     {
@@ -19,7 +19,7 @@ pub fn get_attr(pid: Pid) -> Result<Attributes, std::io::Error> {
 pub fn set_attr(pid: Pid, attr: Attributes) -> Result<(), std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::sched::set_attr(pid, attr)
+        crate::unix::sched::set_attr(pid, attr)
     }
     #[cfg(target_os = "windows")]
     {
@@ -130,7 +130,7 @@ pub fn set_deadline(
 pub fn get_priority_max(pol: Policy) -> Result<isize, std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::sched::get_priority_max(pol)
+        crate::unix::sched::get_priority_max(pol)
     }
     #[cfg(target_os = "windows")]
     {
@@ -141,7 +141,7 @@ pub fn get_priority_max(pol: Policy) -> Result<isize, std::io::Error> {
 pub fn get_priority_min(pol: Policy) -> Result<isize, std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::sched::get_priority_min(pol)
+        crate::unix::sched::get_priority_min(pol)
     }
     #[cfg(target_os = "windows")]
     {
@@ -152,7 +152,7 @@ pub fn get_priority_min(pol: Policy) -> Result<isize, std::io::Error> {
 pub fn sched_yield() -> Result<(), std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::sched::sched_yield()
+        crate::unix::sched::sched_yield()
     }
     #[cfg(target_os = "windows")]
     {
@@ -163,7 +163,7 @@ pub fn sched_yield() -> Result<(), std::io::Error> {
 pub fn set_affinity(pid: Pid, set: CpuSet) -> Result<(), std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::sched::set_affinity(pid, set)
+        crate::unix::sched::set_affinity(pid, set)
     }
     #[cfg(target_os = "windows")]
     {
@@ -174,7 +174,7 @@ pub fn set_affinity(pid: Pid, set: CpuSet) -> Result<(), std::io::Error> {
 pub fn get_affinity(pid: Pid) -> Result<CpuSet, std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::sched::get_affinity(pid)
+        crate::unix::sched::get_affinity(pid)
     }
     #[cfg(target_os = "windows")]
     {
@@ -213,26 +213,26 @@ impl Policy {
     /// Get the policy as raw value.
     pub fn as_raw(&self) -> u32 {
         match self {
-            Policy::Batch => crate::linux::sched::SCHED_BATCH,
-            Policy::Deadline => crate::linux::sched::SCHED_DEADLINE,
-            Policy::Fifo => crate::linux::sched::SCHED_FIFO,
-            Policy::Idle => crate::linux::sched::SCHED_IDLE,
-            Policy::Normal => crate::linux::sched::SCHED_NORMAL,
-            Policy::RoundRobin => crate::linux::sched::SCHED_RR,
-            Policy::Ext => crate::linux::sched::SCHED_EXT,
+            Policy::Batch => crate::unix::sched::SCHED_BATCH,
+            Policy::Deadline => crate::unix::sched::SCHED_DEADLINE,
+            Policy::Fifo => crate::unix::sched::SCHED_FIFO,
+            Policy::Idle => crate::unix::sched::SCHED_IDLE,
+            Policy::Normal => crate::unix::sched::SCHED_NORMAL,
+            Policy::RoundRobin => crate::unix::sched::SCHED_RR,
+            Policy::Ext => crate::unix::sched::SCHED_EXT,
         }
     }
 
     /// Create a [Policy] from a raw value.
     pub fn from_raw(raw: u32) -> Result<Policy, std::io::Error> {
         match raw {
-            crate::linux::sched::SCHED_NORMAL => Ok(Policy::Normal),
-            crate::linux::sched::SCHED_FIFO => Ok(Policy::Fifo),
-            crate::linux::sched::SCHED_RR => Ok(Policy::RoundRobin),
-            crate::linux::sched::SCHED_BATCH => Ok(Policy::Batch),
-            crate::linux::sched::SCHED_IDLE => Ok(Policy::Idle),
-            crate::linux::sched::SCHED_DEADLINE => Ok(Policy::Deadline),
-            crate::linux::sched::SCHED_EXT => Ok(Policy::Ext),
+            crate::unix::sched::SCHED_NORMAL => Ok(Policy::Normal),
+            crate::unix::sched::SCHED_FIFO => Ok(Policy::Fifo),
+            crate::unix::sched::SCHED_RR => Ok(Policy::RoundRobin),
+            crate::unix::sched::SCHED_BATCH => Ok(Policy::Batch),
+            crate::unix::sched::SCHED_IDLE => Ok(Policy::Idle),
+            crate::unix::sched::SCHED_DEADLINE => Ok(Policy::Deadline),
+            crate::unix::sched::SCHED_EXT => Ok(Policy::Ext),
             _ => Err(std::io::Error::from(std::io::ErrorKind::InvalidInput)),
         }
     }
@@ -567,25 +567,36 @@ mod tests {
                 let a = get_attr(Pid::this()).unwrap();
                 assert_eq!(a.policy, Policy::Fifo);
                 assert_eq!(a.nice, 0);
+                // Static real-time priorities have no macOS equivalent
+                // (the time-constraint policy has no priority field),
+                // so only Linux reports them.
+                #[cfg(target_os = "linux")]
                 assert_eq!(a.priority, 60);
             }
 
-            let res = set_rr(Pid::this(), 98);
-            if res.is_ok() {
-                let a = get_attr(Pid::this()).unwrap();
-                assert_eq!(a.policy, Policy::RoundRobin);
-                assert_eq!(a.nice, 0);
-                assert_eq!(a.priority, 98);
-            }
-            let res = set_deadline(Pid::this(), 1_000_000, 1_000_000, 50_000);
-            if res.is_ok() {
-                let a = get_attr(Pid::this()).unwrap();
-                assert_eq!(a.policy, Policy::Deadline);
-                assert_eq!(a.nice, 0);
-                assert_eq!(a.priority, 0);
-                assert_eq!(a.deadline_ns, 1_000_000);
-                assert_eq!(a.period_ns, 1_000_000);
-                assert_eq!(a.runtime_ns, 50_000);
+            // macOS maps all real-time policies to the same
+            // time-constraint thread policy and reports them all as
+            // [Policy::Fifo], so distinguishing RoundRobin and Deadline is
+            // only possible on Linux.
+            #[cfg(target_os = "linux")]
+            {
+                let res = set_rr(Pid::this(), 98);
+                if res.is_ok() {
+                    let a = get_attr(Pid::this()).unwrap();
+                    assert_eq!(a.policy, Policy::RoundRobin);
+                    assert_eq!(a.nice, 0);
+                    assert_eq!(a.priority, 98);
+                }
+                let res = set_deadline(Pid::this(), 1_000_000, 1_000_000, 50_000);
+                if res.is_ok() {
+                    let a = get_attr(Pid::this()).unwrap();
+                    assert_eq!(a.policy, Policy::Deadline);
+                    assert_eq!(a.nice, 0);
+                    assert_eq!(a.priority, 0);
+                    assert_eq!(a.deadline_ns, 1_000_000);
+                    assert_eq!(a.period_ns, 1_000_000);
+                    assert_eq!(a.runtime_ns, 50_000);
+                }
             }
         }
     }
@@ -596,6 +607,7 @@ mod tests {
         get_priority_min(Policy::Fifo).unwrap();
     }
 
+    #[cfg(not(target_os = "macos"))]
     #[test]
     fn test_affinity() {
         let set = get_affinity(Pid::this()).unwrap();

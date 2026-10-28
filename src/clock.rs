@@ -246,7 +246,7 @@ impl PartialOrd for TimeSpec {
 pub fn get_time(clockid: ClockId) -> Result<TimeSpec, std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::clock::get_time(clockid)
+        crate::unix::clock::get_time(clockid)
     }
     #[cfg(target_os = "windows")]
     {
@@ -258,7 +258,7 @@ pub fn get_time(clockid: ClockId) -> Result<TimeSpec, std::io::Error> {
 pub fn set_time(clockid: ClockId, ts: TimeSpec) -> Result<(), std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::clock::set_time(clockid, ts)
+        crate::unix::clock::set_time(clockid, ts)
     }
     #[cfg(target_os = "windows")]
     {
@@ -279,7 +279,7 @@ pub fn set_time(clockid: ClockId, ts: TimeSpec) -> Result<(), std::io::Error> {
 pub fn nanosleep_relative(clockid: ClockId, ts: TimeSpec) -> Result<(), std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::clock::nanosleep_relative(clockid, ts)
+        crate::unix::clock::nanosleep_relative(clockid, ts)
     }
     #[cfg(target_os = "windows")]
     {
@@ -298,7 +298,7 @@ pub fn nanosleep_relative(clockid: ClockId, ts: TimeSpec) -> Result<(), std::io:
 pub fn nanosleep_absolute(clockid: ClockId, ts: TimeSpec) -> Result<(), std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::clock::nanosleep_absolute(clockid, ts)
+        crate::unix::clock::nanosleep_absolute(clockid, ts)
     }
 
     #[cfg(target_os = "windows")]
@@ -315,7 +315,7 @@ pub fn nanosleep_relative_with_remain(
 ) -> Result<TimeSpec, std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::clock::nanosleep_relative_with_remain(clockid, ts)
+        crate::unix::clock::nanosleep_relative_with_remain(clockid, ts)
     }
     #[cfg(target_os = "windows")]
     {
@@ -330,7 +330,7 @@ pub fn nanosleep_absolute_with_remain(
 ) -> Result<TimeSpec, std::io::Error> {
     #[cfg(target_family = "unix")]
     {
-        crate::linux::clock::nanosleep_absolute_with_remain(clockid, ts)
+        crate::unix::clock::nanosleep_absolute_with_remain(clockid, ts)
     }
     #[cfg(target_os = "windows")]
     {
