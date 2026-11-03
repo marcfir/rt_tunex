@@ -49,7 +49,7 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, "macos"]
+        os: [ubuntu-latest, windows-latest, "macos-latest"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
