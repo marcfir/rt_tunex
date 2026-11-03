@@ -171,8 +171,18 @@ mod test {
     #[cfg(not(target_os = "macos"))]
     #[test]
     fn test_mlockall() {
-        mlockall(MmanFlags::empty()).unwrap();
+        // At least one of MCL_CURRENT / MCL_FUTURE must be set: Linux rejects
+        // empty flags with EINVAL, while Windows is a documented no-op.
+        let empty = mlockall(MmanFlags::empty());
+        #[cfg(target_os = "linux")]
+        assert_eq!(empty.unwrap_err().kind(), std::io::ErrorKind::InvalidInput);
+        #[cfg(target_os = "windows")]
+        assert!(empty.is_ok());
+
         mlockall(MmanFlags::MCL_FUTURE).unwrap();
+        // Unlock again so the process-wide MCL_FUTURE flag does not affect
+        // other tests running in the same process.
+        munlockall().unwrap();
     }
 
     #[cfg(target_os = "macos")]
