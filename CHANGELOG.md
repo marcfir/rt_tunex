@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-11-03
+
+### ✨ Features
+
+* Support macOS
+
+### 🐛 Fixed
+
+* Fix `mlock` test
+* Fix macos ci
+* Fix Linux code after macOS support
+
+### ⚙️ Miscellaneous Tasks
+
+* Enable macOS in CI
+* Update dependencies
+
 ## [0.5.0] - 2026-06-03
 
 ### ✨ Features
